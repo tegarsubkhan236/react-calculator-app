@@ -18,133 +18,68 @@ const toLocaleString = (num) =>
 const removeSpaces = (num) => num.toString().replace(/\s/g, "");
 
 function App() {
-    let [calc, setCalc] = useState({
-        sign: "",
-        num: 0,
-        res: 0,
-    });
+    const [calc, setCalc] = useState({ sign: "", num: 0, res: 0 });
+
+    const performOperation = (a, b, sign) => {
+        switch (sign) {
+            case "+": return a + b;
+            case "-": return a - b;
+            case "X": return a * b;
+            case "/": return b === 0 ? "Can't divide by 0" : a / b;
+            default: return b;
+        }
+    };
 
     const handleClick = (btn) => {
+        const num = removeSpaces(calc.num);
+        const res = removeSpaces(calc.res);
+
         switch (btn) {
             case "c":
-                resetClickHandler();
+                setCalc({ sign: "", num: 0, res: 0 });
                 break;
             case "+-":
-                invertClickHandler();
+                setCalc({ ...calc, num: num * -1, res: res * -1 });
                 break;
             case "%":
-                percentClickHandler();
+                setCalc({ ...calc, num: num / 100, res: res / 100 });
                 break;
             case "=":
-                equalsClickHandler();
+                if (calc.sign && calc.num) {
+                    setCalc({
+                        ...calc,
+                        res: toLocaleString(performOperation(Number(res), Number(num), calc.sign)),
+                        sign: "",
+                        num: 0,
+                    });
+                }
                 break;
             case "/":
             case "X":
             case "-":
             case "+":
-                signClickHandler(btn);
+                setCalc({
+                    ...calc,
+                    sign: btn,
+                    res: calc.num ? calc.num : calc.res,
+                    num: 0,
+                });
                 break;
             case ".":
-                commaClickHandler();
+                setCalc({ ...calc, num: calc.num.includes(".") ? calc.num : calc.num + "." });
                 break;
             default:
-                numClickHandler(btn);
+                setCalc({
+                    ...calc,
+                    num: num.length < 16 ? toLocaleString(num === "0" ? btn : num + btn) : calc.num,
+                });
                 break;
         }
-    };
-
-    const numClickHandler = (value) => {
-        if (removeSpaces(calc.num).length < 16) {
-            setCalc({
-                ...calc,
-                num:
-                    calc.num === 0 && value === "0"
-                        ? "0"
-                        : removeSpaces(calc.num) % 1 === 0
-                            ? toLocaleString(Number(removeSpaces(calc.num + value)))
-                            : toLocaleString(calc.num + value),
-                res: !calc.sign ? 0 : calc.res,
-            });
-        }
-    };
-
-    const commaClickHandler = () => {
-        setCalc({
-            ...calc,
-            num: !calc.num.toString().includes(".") ? calc.num + "." : calc.num,
-        });
-    };
-
-    const signClickHandler = (value) => {
-        setCalc({
-            ...calc,
-            sign: value,
-            res: !calc.res && calc.num ? calc.num : calc.res,
-            num: 0,
-        });
-    };
-
-    const equalsClickHandler = () => {
-        if (calc.sign && calc.num) {
-            const math = (a, b, sign) =>
-                sign === "+"
-                    ? a + b
-                    : sign === "-"
-                        ? a - b
-                        : sign === "X"
-                            ? a * b
-                            : a / b;
-
-            setCalc({
-                ...calc,
-                res:
-                    calc.num === "0" && calc.sign === "/"
-                        ? "Can't divide with 0"
-                        : toLocaleString(
-                            math(
-                                Number(removeSpaces(calc.res)),
-                                Number(removeSpaces(calc.num)),
-                                calc.sign
-                            )
-                        ),
-                sign: "",
-                num: 0,
-            });
-        }
-    };
-
-    const invertClickHandler = () => {
-        setCalc({
-            ...calc,
-            num: calc.num ? toLocaleString(removeSpaces(calc.num) * -1) : 0,
-            res: calc.res ? toLocaleString(removeSpaces(calc.res) * -1) : 0,
-            sign: "",
-        });
-    };
-
-    const percentClickHandler = () => {
-        let num = calc.num ? parseFloat(removeSpaces(calc.num)) : 0;
-        let res = calc.res ? parseFloat(removeSpaces(calc.res)) : 0;
-
-        setCalc({
-            ...calc,
-            num: (num /= Math.pow(100, 1)),
-            res: (res /= Math.pow(100, 1)),
-            sign: "",
-        });
-    };
-
-    const resetClickHandler = () => {
-        setCalc({
-            sign: "",
-            num: 0,
-            res: 0,
-        });
     };
 
     return (
         <Wrapper>
-            <Screen value={calc.num ? calc.num : calc.res} />
+            <Screen value={calc.num || calc.res} />
             <ButtonBox>
                 {btnValues.flat().map((btn, i) => (
                     <Button
